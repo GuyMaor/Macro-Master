@@ -3,47 +3,45 @@ extern const int NUM_ROWS;
 extern const int NUM_COLS;
 extern const int write_pins[];
 extern const int read_pins[];
-extern int key_state[];
 extern const int key_assignment[];
 
 void setup() {
+  //Initialize serial port
   Serial.begin(9600);
+
+  //Configure all read pins
   for(int row = 0; row < NUM_ROWS; row++){
     pinMode(read_pins[row], INPUT_PULLUP);
   }
+
+  //Configure all write pins
   for(int col = 0; col < NUM_COLS; col++){
     pinMode(write_pins[col], OUTPUT);
     digitalWrite(write_pins[col],HIGH);
   }
+
+  //Initialize keyboard
   Keyboard.begin();
 }
-void check_keys(){
+
+void loop(){
   for(int col = 0; col < NUM_COLS; col++){
+    //Activate the column
     digitalWrite(write_pins[col],LOW);
-    for(int row = 0; row < NUM_ROWS; row++){     
+
+    //Read all keys only in the activated column
+    for(int row = 0; row < NUM_ROWS; row++){
+      int key_ind = row * NUM_COLS + col;
       if(digitalRead(read_pins[row]) == LOW){
-        key_state[row * NUM_COLS + col] = 1;
+        Keyboard.press(key_assignment[key_ind]);
       }
       else{
-        key_state[row * NUM_COLS + col] = 0;  
+        Keyboard.release(key_assignment[key_ind]); 
       }
     }
+
+    //Deactivate the column
     digitalWrite(write_pins[col],HIGH);
-  } 
-}
-void report_keys(){
-  for(int key = 0; key < NUM_ROWS * NUM_COLS; key++){
-    if(key_state[key] == 1){
-      Keyboard.press(key_assignment[key]);
-    }
-    else{
-      Keyboard.release(key_assignment[key]);
-    }
   }
-  Serial.print("\n");
-}
-void loop() {
-  check_keys();
-  report_keys();
-  delay(30);
+  delay(30);  
 }
